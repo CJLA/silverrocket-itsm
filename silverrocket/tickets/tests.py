@@ -25,6 +25,17 @@ class TicketModelTests(TestCase):
         self.assertEqual(self.ticket.priority, Ticket.Priority.MEDIUM)
         self.assertEqual(self.ticket.created_by, self.user)
         self.assertIsNone(self.ticket.assigned_to)
+        self.assertEqual(self.ticket.display_number, 1)
+        self.assertEqual(self.ticket.display_id, "TKT-00001")
+
+    def test_ticket_display_id_sequential(self):
+        ticket2 = Ticket.objects.create(
+            title="Second Ticket",
+            description="This is another test ticket.",
+            created_by=self.user,
+        )
+        self.assertEqual(ticket2.display_number, 2)
+        self.assertEqual(ticket2.display_id, "TKT-00002")
 
     def test_string_representation_returns_title(self):
         self.assertEqual(str(self.ticket), "Test Ticket (Open)")

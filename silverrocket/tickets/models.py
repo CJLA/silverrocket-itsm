@@ -1,11 +1,13 @@
 import uuid
 
-from core.mixins import ShortUUIDMixin
+from core.mixins import DisplayIDMixin
 from django.conf import settings
 from django.db import models
 
 
-class Ticket(ShortUUIDMixin, models.Model):
+class Ticket(DisplayIDMixin, models.Model):
+    display_prefix = "TKT"
+
     class Status(models.IntegerChoices):
         OPEN = 1, "Open"
         IN_PROGRESS = 2, "In Progress"
