@@ -1,0 +1,31 @@
+line-length = 88
+target-version = "py313"
+
+exclude = [
+    "**/migrations/*.py",
+    ".venv",
+    "venv",
+    "__pycache__",
+]
+
+[lint]
+select = [
+    "A",   # builtins
+    "B",   # bugbear
+    "C4",  # comprehensions
+    "DJ",  # django
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8 naming
+    "SIM", # simplify
+    "UP",  # pyupgrade
+]
+
+ignore = []
+
+fixable = ["ALL"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
