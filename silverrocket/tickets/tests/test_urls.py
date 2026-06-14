@@ -14,7 +14,7 @@ class TicketURLTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_ticket_list_endpoint_returns_tickets(self):
-        ticket = Ticket.objects.create(  # noqa: F841
+        Ticket.objects.create(
             title="Printer Issue",
             description="Printer is jammed.",
             created_by=self.user,
