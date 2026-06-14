@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.test import TestCase
 
 from accounts.models import CustomUser
@@ -26,7 +27,7 @@ class CustomUserModelTests(TestCase):
         )
 
     def test_duplicateemail_raises_error(self):
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             CustomUser.objects.create_user(
                 email="test@example.com",
                 password="password123",
