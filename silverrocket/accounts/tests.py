@@ -1,5 +1,8 @@
 from django.db import IntegrityError
 from django.test import TestCase
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
 
 from accounts.models import CustomUser
 
@@ -26,7 +29,7 @@ class CustomUserModelTests(TestCase):
             "testnormalize@example.com",
         )
 
-    def test_duplicateemail_raises_error(self):
+    def test_duplicate_email_raises_error(self):
         with self.assertRaises(IntegrityError):
             CustomUser.objects.create_user(
                 email="test@example.com",
@@ -42,7 +45,7 @@ class CustomUserModelTests(TestCase):
             CustomUser.Roles.TECHNICIAN,
         )
 
-    def test_user_string_returns_email(self):
+    def test_str_returns_email(self):
         self.assertEqual(
             str(self.user),
             "test@example.com",
@@ -75,3 +78,79 @@ class CustomUserModelTests(TestCase):
 
     def test_check_password_returns_false_for_invalid_password(self):
         self.assertFalse(self.user.check_password("wrongpassword"))
+
+
+class UserRegistrationTests(APITestCase):
+    def setUp(self):
+        self.url = reverse("accounts:register")
+
+    def test_user_can_register(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": "newuser@example.com",
+                "password": "newpassword123",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        user = CustomUser.objects.get(email="newuser@example.com")
+
+        self.assertTrue(user.check_password("newpassword123"))
+        self.assertEqual(user.email, "newuser@example.com")
+        self.assertNotIn("password", response.data)
+
+    def test_duplicate_email_returns_400(self):
+        CustomUser.objects.create_user(
+            email="newuser@example.com",
+            password="newpassword123",
+        )
+
+        response = self.client.post(
+            self.url,
+            {
+                "email": "newuser@example.com",
+                "password": "newpassword123",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+
+    def test_email_is_required(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": "",
+                "password": "newpassword123",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_password_is_required(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": "newuser@example.com",
+                "password": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_email_domain_is_normalized_on_registration(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": "NewUser@Example.com",
+                "password": "newpassword123",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        user = CustomUser.objects.get(email="NewUser@example.com")
+        self.assertEqual(user.email, "NewUser@example.com")
+        self.assertTrue(user.check_password("newpassword123"))
