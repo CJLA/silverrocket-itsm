@@ -154,3 +154,31 @@ class UserRegistrationTests(APITestCase):
         user = CustomUser.objects.get(email="NewUser@example.com")
         self.assertEqual(user.email, "NewUser@example.com")
         self.assertTrue(user.check_password("newpassword123"))
+
+    def test_duplicate_email_with_different_domain_case_returns_400(self):
+        CustomUser.objects.create_user(
+            email="newuser@example.com",
+            password="newpassword123",
+        )
+
+        response = self.client.post(
+            self.url,
+            {
+                "email": "newuser@Example.com",
+                "password": "newpassword123",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+
+    def test_common_password_returns_400(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": "newuser@example.com",
+                "password": "password",
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("password", response.data)
