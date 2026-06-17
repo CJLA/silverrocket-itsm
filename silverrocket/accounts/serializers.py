@@ -12,6 +12,13 @@ class NormalizedEmailField(serializers.EmailField):
         return CustomUser.objects.normalize_email(value)
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ("id", "email", "first_name", "last_name", "role")
+        read_only_fields = fields
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     email = NormalizedEmailField(
         validators=[
@@ -40,3 +47,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return CustomUser.objects.create_user(**validated_data)
+
+
+class UserLoginSerializer(serializers.Serializer):
+    email = NormalizedEmailField()
+    password = serializers.CharField(write_only=True)
