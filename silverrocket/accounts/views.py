@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import CustomUser
-from .serializers import UserLoginSerializer, UserRegistrationSerializer
+from .serializers import UserLoginSerializer, UserRegistrationSerializer, UserSerializer
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -33,4 +33,4 @@ class UserLoginView(APIView):
 
         login(request, user)
 
-        return Response({"user": UserLoginSerializer(user).data})
+        return Response({"user": UserSerializer(user).data})

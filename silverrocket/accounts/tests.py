@@ -182,3 +182,89 @@ class UserRegistrationTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("password", response.data)
+
+
+class UserLoginTests(APITestCase):
+    def setUp(self):
+        self.url = reverse("accounts:login")
+        self.password = "testpass123"
+        self.user = CustomUser.objects.create_user(
+            email="testuser@example.com",
+            password=self.password,
+            first_name="Test",
+            last_name="User",
+        )
+
+    def test_user_can_login_with_valid_credentials(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": self.user.email,
+                "password": self.password,
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("user", response.data)
+        self.assertEqual(response.data["user"]["email"], self.user.email)
+        self.assertEqual(response.data["user"]["first_name"], self.user.first_name)
+        self.assertEqual(response.data["user"]["last_name"], self.user.last_name)
+
+    def test_login_response_does_not_include_password(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": self.user.email,
+                "password": self.password,
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn("password", response.data["user"])
+
+    def test_user_cannot_login_with_invalid_credentials(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": self.user.email,
+                "password": "wrongpassword",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data["detail"], "Invalid credentials.")
+
+    def test_user_cannot_login_with_nonexistent_email(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": "nonexistent@example.com",
+                "password": "somepassword",
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data["detail"], "Invalid credentials.")
+
+    def test_login_with_missing_email_returns_400(self):
+        response = self.client.post(
+            self.url,
+            {
+                "password": self.password,
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+
+    def test_login_email_domain_is_normalized(self):
+        response = self.client.post(
+            self.url,
+            {
+                "email": "testuser@EXAMPLE.com",
+                "password": self.password,
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["user"]["email"], self.user.email)
