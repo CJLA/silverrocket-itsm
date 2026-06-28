@@ -48,3 +48,32 @@ class TicketViewSetTests(APITestCase):
         self.assertEqual(ticket.title, "New Ticket")
         self.assertEqual(ticket.description, "Keyboard not working.")
         self.assertEqual(ticket.created_by, self.user)
+
+
+class TicketAuthenticationTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = CustomUser.objects.create_user(
+            email="user@example.com",
+            password="testpass123",
+        )
+
+    def test_ticket_list_requires_authentication(self):
+        response = self.client.get(reverse("tickets:ticket-list"))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_ticket_creation_requires_authentication(self):
+        response = self.client.post(
+            reverse("tickets:ticket-list"),
+            {
+                "title": "Unauthorized Ticket",
+                "description": "This should not be created.",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_authenticated_user_can_access_ticket_list(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse("tickets:ticket-list"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
