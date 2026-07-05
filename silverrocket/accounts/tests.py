@@ -268,3 +268,37 @@ class UserLoginTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["user"]["email"], self.user.email)
+
+
+class UserLogoutTests(APITestCase):
+    def setUp(self):
+        self.url = reverse("accounts:logout")
+        self.password = "testpass123"
+        self.user = CustomUser.objects.create_user(
+            email="testuser@example.com",
+            password=self.password,
+            first_name="Test",
+            last_name="User",
+        )
+
+    def test_user_can_logout(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["detail"], "Successfully logged out.")
+
+    def test_logout_without_authentication_returns_403(self):
+        self.client.logout()
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_user_is_logged_out_after_logout(self):
+        self.client.login(email=self.user.email, password=self.password)
+
+        logout_response = self.client.post(self.url)
+        self.assertEqual(logout_response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(reverse("tickets:ticket-list"))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
